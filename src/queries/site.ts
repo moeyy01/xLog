@@ -148,6 +148,14 @@ export function useUpdateSite() {
         platform: string
         url?: string | undefined
       }[]
+      code_theme?: {
+        light?: string
+        dark?: string
+      }
+      follow?: {
+        feed_id?: string
+        user_id?: string
+      }
     }) => {
       if (!input.characterId) {
         throw new Error("characterId are required")
@@ -217,6 +225,8 @@ export function useUpdateSite() {
               }
             }
             setAttribute("navigation", "navigation", true)
+            setAttribute("code_theme", "code_theme", true)
+            setAttribute("follow", "follow", true)
             setAttribute("css", "css")
             setAttribute("ga", "ga")
             setAttribute("ua", "ua")

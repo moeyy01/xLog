@@ -13,7 +13,7 @@ import {
 } from "~/lib/types"
 
 import { detectLanguage } from "./detect-lang"
-import { getNoteSlug } from "./helpers"
+import { getNoteSlug, getRandomAvatarUrl } from "./helpers"
 
 export const expandCrossbellNote = async ({
   note,
@@ -56,7 +56,7 @@ export const expandCrossbellNote = async ({
   )
 
   if (expandedNote.metadata?.content) {
-    let rendered
+    let renderedMetadata
     if (expandedNote.metadata?.content?.content) {
       const { renderPageContent } = await import("~/markdown")
 
@@ -95,7 +95,10 @@ export const expandCrossbellNote = async ({
         }
       }
 
-      rendered = renderPageContent(expandedNote.metadata.content.content!, true)
+      const rendered = renderPageContent({
+        content: expandedNote.metadata.content.content,
+      })
+      renderedMetadata = rendered.toMetadata()
       if (keyword) {
         const position = expandedNote.metadata.content.content
           .toLowerCase()
@@ -106,45 +109,47 @@ export const expandCrossbellNote = async ({
         )}`
       } else {
         if (!expandedNote.metadata.content.summary && !disableAutofill) {
-          expandedNote.metadata.content.summary = rendered.excerpt
+          expandedNote.metadata.content.summary = renderedMetadata.excerpt
         }
       }
 
-      expandedNote.metadata.content.audio = rendered.audio
-      expandedNote.metadata.content.frontMatter = rendered.frontMatter
+      expandedNote.metadata.content.audio = renderedMetadata.audio
+      expandedNote.metadata.content.frontMatter = renderedMetadata.frontMatter
 
       if (useHTML) {
-        expandedNote.metadata.content.contentHTML = rendered.contentHTML
+        expandedNote.metadata.content.contentHTML = rendered.toHTML()
       }
     }
-    expandedNote.metadata.content.cover =
-      expandedNote.metadata?.content?.attachments?.find(
-        (attachment) => attachment.name === "cover",
-      )?.address || (disableAutofill ? "" : rendered?.cover)
 
-    expandedNote.metadata.content.images = []
-
-    const cover = expandedNote.metadata?.content?.attachments?.find(
+    const attachmentsCover = expandedNote.metadata?.content?.attachments?.find(
       (attachment) => attachment.name === "cover",
     )?.address
-    if (cover) {
-      expandedNote.metadata.content.images.push(cover)
-    }
-
     const attachmentsImages = expandedNote.metadata?.content?.attachments
       ?.filter(
         (attachment) => attachment.name === "image" && attachment.address,
       )
       .map((attachment) => attachment.address!)
+
+    expandedNote.metadata.content.images = []
+
+    if (attachmentsCover) {
+      expandedNote.metadata.content.images.push(attachmentsCover)
+    }
+
     expandedNote.metadata.content.images =
       expandedNote.metadata.content.images.concat(attachmentsImages || [])
 
     expandedNote.metadata.content.images =
-      expandedNote.metadata.content.images.concat(rendered?.images || [])
+      expandedNote.metadata.content.images.concat(
+        renderedMetadata?.images || [],
+      )
 
     expandedNote.metadata.content.images = [
       ...new Set(expandedNote.metadata.content.images),
     ]
+
+    expandedNote.metadata.content.cover =
+      attachmentsCover || (disableAutofill ? "" : renderedMetadata?.images?.[0])
 
     if (useImageDimensions) {
       try {
@@ -239,6 +244,11 @@ export const expandCrossbellNote = async ({
 }
 
 export const expandCrossbellCharacter = async (site: CharacterEntity) => {
+  if (!site.metadata && site.uri) {
+    site.metadata = {
+      uri: site.uri,
+    }
+  }
   if (site.metadata?.uri && !site.metadata?.content) {
     site.metadata.content = await (
       await fetch(toGateway(site.metadata.uri))
@@ -253,6 +263,11 @@ export const expandCrossbellCharacter = async (site: CharacterEntity) => {
     },
     site,
   )
+  if (!expandedCharacter.metadata) {
+    expandedCharacter.metadata = {
+      content: {},
+    }
+  }
   if (!expandedCharacter.metadata.content) {
     expandedCharacter.metadata.content = {}
   }
@@ -262,6 +277,22 @@ export const expandCrossbellCharacter = async (site: CharacterEntity) => {
       (a: any) => a.trait_type === "xlog_navigation",
     )?.value as string) || "null",
   ) || [{ id: nanoid(), label: "Archives", url: "/archives" }]
+
+  expandedCharacter.metadata.content.code_theme = JSON.parse(
+    (expandedCharacter.metadata?.content?.attributes?.find(
+      (a: any) => a.trait_type === "xlog_code_theme",
+    )?.value as string) || "null",
+  ) || {
+    light: "github-light-default",
+    dark: "github-dark-default",
+  }
+
+  expandedCharacter.metadata.content.follow =
+    JSON.parse(
+      (expandedCharacter.metadata?.content?.attributes?.find(
+        (a: any) => a.trait_type === "xlog_follow",
+      )?.value as string) || "null",
+    ) || undefined
 
   const getArribute = (outputKey: string, typeKey: string) => {
     ;(expandedCharacter.metadata.content as any)[outputKey] =
@@ -287,7 +318,7 @@ export const expandCrossbellCharacter = async (site: CharacterEntity) => {
         .filter(Boolean)
   } else {
     expandedCharacter.metadata.content.avatars = [
-      `https://api.dicebear.com/6.x/bottts-neutral/svg?seed=${expandedCharacter.characterId}`,
+      getRandomAvatarUrl(expandedCharacter.characterId),
     ]
   }
 

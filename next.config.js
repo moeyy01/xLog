@@ -47,7 +47,6 @@ module.exports = withBundleAnalyzer(
     },
 
     images: {
-      dangerouslyAllowSVG: true,
       contentSecurityPolicy:
         "default-src 'self'; script-src 'none'; sandbox; style-src 'unsafe-inline';",
       remotePatterns: [

@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl"
 import { useParams } from "next/navigation"
 
 import { CharacterFloatCard } from "~/components/common/CharacterFloatCard"
+import Heatmap from "~/components/common/Heatmap"
 import { DashboardMain } from "~/components/dashboard/DashboardMain"
 import { Image } from "~/components/ui/Image"
 import { UniLink } from "~/components/ui/UniLink"
@@ -111,7 +112,7 @@ export default function SubdomainIndex() {
   return (
     <DashboardMain title="Dashboard" className="max-w-screen-2xl">
       <div className="min-w-[270px] flex flex-col xl:flex-row space-y-8 xl:space-y-0">
-        <div className="flex-1 space-y-8">
+        <div className="flex-1 space-y-8 min-w-0">
           <div className="grid gap-4 sm:grid-cols-3 grid-cols-2">
             {statMap.map((item) => (
               <UniLink
@@ -132,6 +133,7 @@ export default function SubdomainIndex() {
               </UniLink>
             ))}
           </div>
+          <Heatmap characterId={characterId} />
           <div className="prose p-6 bg-slate-50 rounded-lg relative">
             {t.rich("hello.welcome", {
               p: (chunks) => <p>{chunks}</p>,
@@ -205,8 +207,9 @@ export default function SubdomainIndex() {
             <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
               {pages.data?.pages[0]?.list.map((item) => (
                 <UniLink
-                  href={`${getSiteLink({ subdomain: "xlog" })}/${item.metadata
-                    ?.content?.slug}`}
+                  href={`${getSiteLink({ subdomain: "xlog" })}/${
+                    item.metadata?.content?.slug
+                  }`}
                   key={item.transactionHash}
                   className="bg-slate-100 rounded-lg flex flex-col py-4 px-6"
                 >
@@ -241,7 +244,7 @@ export default function SubdomainIndex() {
                     className="inline-flex align-middle w-full"
                   >
                     <CharacterFloatCard siteId={site.handle}>
-                      <span className="w-14 h-14 inline-block">
+                      <span className="size-14 inline-block">
                         <Image
                           className="rounded-full"
                           src={

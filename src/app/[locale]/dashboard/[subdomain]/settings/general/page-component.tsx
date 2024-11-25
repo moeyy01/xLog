@@ -5,6 +5,7 @@ import { useParams } from "next/navigation"
 import { useEffect, useState } from "react"
 import { Controller, useForm } from "react-hook-form"
 import toast from "react-hot-toast"
+import { bundledThemesInfo } from "shiki/themes"
 
 import { SettingsLayout } from "~/components/dashboard/SettingsLayout"
 import { Button } from "~/components/ui/Button"
@@ -33,6 +34,10 @@ export default function SiteSettingsGeneralPage() {
       ga: "",
       ua: "",
       uh: "",
+      code_theme_light: "",
+      code_theme_dark: "",
+      follow_feed_id: undefined,
+      follow_user_id: undefined,
     } as {
       icon?: string
       banner?: {
@@ -46,6 +51,10 @@ export default function SiteSettingsGeneralPage() {
       ga: string
       ua: string
       uh: string
+      code_theme_light: string
+      code_theme_dark: string
+      follow_feed_id?: string
+      follow_user_id?: string
     },
   })
 
@@ -61,6 +70,14 @@ export default function SiteSettingsGeneralPage() {
       ga: values.ga,
       ua: values.ua,
       uh: values.uh,
+      code_theme: {
+        light: values.code_theme_light,
+        dark: values.code_theme_dark,
+      },
+      follow: {
+        feed_id: values.follow_feed_id,
+        user_id: values.follow_user_id,
+      },
     })
   })
 
@@ -105,6 +122,28 @@ export default function SiteSettingsGeneralPage() {
         form.setValue("ua", site.data.metadata?.content?.ua || "")
       !form.getValues("uh") &&
         form.setValue("uh", site.data.metadata?.content?.uh || "")
+      !form.getValues("code_theme_light") &&
+        form.setValue(
+          "code_theme_light",
+          site.data.metadata?.content?.code_theme?.light ||
+            "github-light-default",
+        )
+      !form.getValues("code_theme_dark") &&
+        form.setValue(
+          "code_theme_dark",
+          site.data.metadata?.content?.code_theme?.dark ||
+            "github-dark-default",
+        )
+      !form.getValues("follow_feed_id") &&
+        form.setValue(
+          "follow_feed_id",
+          site.data.metadata?.content?.follow?.feed_id,
+        )
+      !form.getValues("follow_user_id") &&
+        form.setValue(
+          "follow_user_id",
+          site.data.metadata?.content?.follow?.user_id,
+        )
     }
   }, [site.data, form])
 
@@ -123,7 +162,7 @@ export default function SiteSettingsGeneralPage() {
             control={form.control}
             render={({ field }) => (
               <ImageUploader
-                className="w-24 h-24 rounded-full"
+                className="size-24 rounded-full"
                 uploadStart={() => {
                   setIconUploading(true)
                 }}
@@ -208,6 +247,39 @@ export default function SiteSettingsGeneralPage() {
             {...form.register("footer")}
             help={t("Support Markdown")}
           />
+        </div>
+        <div className="mt-5 flex gap-3">
+          <Input
+            label="Code Theme Light"
+            options={bundledThemesInfo
+              .filter((i) => i.type === "light")
+              .map((i) => i.id)}
+            id="code_theme_light"
+            {...form.register("code_theme_light")}
+          />
+          <Input
+            label="Code Theme Dark"
+            options={bundledThemesInfo
+              .filter((i) => i.type === "dark")
+              .map((i) => i.id)}
+            id="code_theme_dark"
+            {...form.register("code_theme_dark")}
+          />
+        </div>
+        <div className="mt-5 flex gap-6 items-center">
+          <p className="text-lg font-bold">Follow</p>
+          <div className="flex gap-3">
+            <Input
+              label="Feed ID"
+              id="follow_feed_id"
+              {...form.register("follow_feed_id")}
+            />
+            <Input
+              label="User ID"
+              id="follow_user_id"
+              {...form.register("follow_user_id")}
+            />
+          </div>
         </div>
         <div className="mt-5">
           <Input

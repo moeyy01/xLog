@@ -7,7 +7,8 @@ import removeMarkdown from "remove-markdown"
 import { Metadata } from "@prisma/client"
 import { QueryClient } from "@tanstack/react-query"
 
-import { defaultLocale, locales } from "~/i18n"
+import { locales } from "~/i18n"
+import { detectLanguage } from "~/lib/detect-lang"
 import { toGateway } from "~/lib/ipfs-parser"
 import prisma from "~/lib/prisma.server"
 import { cacheGet } from "~/lib/redis.server"
@@ -78,17 +79,27 @@ let model: OpenAI | undefined
 if (process.env.OPENAI_API_KEY) {
   model = new OpenAI({
     openAIApiKey: process.env.OPENAI_API_KEY,
-    modelName: "gpt-3.5-turbo",
+    modelName: "gpt-4o-mini",
     temperature: 0.3,
     maxTokens: 400,
   })
 }
 const chains = new Map<string, AnalyzeDocumentChain>()
 
-const getOriginalSummary = async (cid: string, lang: string) => {
+const getOriginalSummary = async ({
+  cid,
+  lang,
+  content: _content,
+}: {
+  cid: string
+  content?: string
+  lang?: string
+}) => {
   if (!model) return
   try {
-    let { content } = await (await fetch(toGateway(`ipfs://${cid}`))).json()
+    let content: string =
+      _content ??
+      (await (await fetch(toGateway(`ipfs://${cid}`))).json()).content
 
     if (content?.length > 5000) {
       content = content.slice(0, 5000)
@@ -96,12 +107,13 @@ const getOriginalSummary = async (cid: string, lang: string) => {
     if (content?.length < 200) {
       return
     } else if (content) {
-      console.time(`fetching summary ${cid}, ${lang}`)
+      const summaryLang = lang ?? detectLanguage(content)
+      console.time(`fetching summary ${cid}, ${summaryLang}`)
 
-      let chain = chains.get(lang)
+      let chain = chains.get(summaryLang)
       if (!chain) {
         const prompt = new PromptTemplate({
-          template: `Summarize this in "${lang}" language:
+          template: `Summarize this in "${summaryLang}" language, If it is a markdown file that includes front matter, Ignore the front matter. Summarize only the content after the second ---:
         "{text}"
         CONCISE SUMMARY:`,
           inputVariables: ["text"],
@@ -117,7 +129,7 @@ const getOriginalSummary = async (cid: string, lang: string) => {
           combineDocumentsChain: combineDocsChain,
         })
 
-        chains.set(lang, chain)
+        chains.set(summaryLang, chain)
       }
 
       const res = await chain.call({
@@ -138,11 +150,19 @@ const lock = new AsyncLock()
 
 export async function getSummary({
   cid,
-  lang = defaultLocale,
+  lang: _lang,
 }: {
   cid: string
   lang?: string
 }) {
+  let lang = _lang ?? ""
+  let content: string | undefined
+  if (!lang) {
+    content = (await (await fetch(toGateway(`ipfs://${cid}`))).json())
+      .content as string
+    lang = detectLanguage(content)
+  }
+
   const summary = (await cacheGet({
     key: ["summary", cid, lang],
     allowEmpty: true,
@@ -162,7 +182,7 @@ export async function getSummary({
             if (meta?.[key as keyof Metadata]) {
               result = meta?.[key as keyof Metadata]
             } else {
-              const summary = await getOriginalSummary(cid, lang)
+              const summary = await getOriginalSummary({ cid, lang, content })
               if (summary) {
                 await prisma.metadata.update({
                   where: {
@@ -176,7 +196,7 @@ export async function getSummary({
               }
             }
           } else {
-            const summary = await getOriginalSummary(cid, lang)
+            const summary = await getOriginalSummary({ cid, lang, content })
             if (summary) {
               await prisma.metadata.create({
                 data: {
