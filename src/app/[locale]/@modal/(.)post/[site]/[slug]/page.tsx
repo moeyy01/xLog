@@ -3,11 +3,12 @@ import { notFound } from "next/navigation"
 
 import { dehydrate, Hydrate } from "@tanstack/react-query"
 
-import PageContent from "~/components/common/PageContent"
+import MarkdownContentServer from "~/components/common/MarkdownContentServer"
 import PostCover from "~/components/home/PostCover"
 import PostModal from "~/components/home/PostModal"
 import { PostFooter } from "~/components/site/PostFooter"
 import PostMeta from "~/components/site/PostMeta"
+import PostTitle from "~/components/site/PostTitle"
 import { SiteHeader } from "~/components/site/SiteHeader"
 import { toCid } from "~/lib/ipfs-parser"
 import { isOnlyContent } from "~/lib/is-only-content"
@@ -102,15 +103,11 @@ export default async function SiteModal({
             ) : (
               <>
                 <div>
-                  {page?.metadata?.content?.tags?.includes("post") ? (
-                    <h2 className="xlog-post-title text-4xl font-bold leading-tight text-center">
-                      {page.metadata?.content?.title}
-                    </h2>
-                  ) : (
-                    <h2 className="xlog-post-title text-xl font-bold page-title text-center">
-                      {page?.metadata?.content?.title}
-                    </h2>
-                  )}
+                  <PostTitle
+                    title={page?.metadata?.content?.title}
+                    skipTranslate={true}
+                    center={true}
+                  />
                   {page?.metadata?.content?.tags?.includes("post") && (
                     <PostMeta
                       page={page}
@@ -122,14 +119,14 @@ export default async function SiteModal({
                     />
                   )}
                 </div>
-                <PageContent
+                <MarkdownContentServer
                   className="mt-10"
                   content={page?.metadata?.content?.content}
-                  toc={false}
                   page={page}
                   site={site}
                   withActions={false}
                   onlyContent={onlyContent}
+                  codeTheme={site.metadata.content.code_theme}
                 />
               </>
             )}

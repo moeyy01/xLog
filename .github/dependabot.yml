@@ -4,18 +4,10 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
-    open-pull-requests-limit: 20
-    ignore:
-      - dependency-name: "rehype-*"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "remark-*"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "unified"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "remark-emoji"
+    open-pull-requests-limit: 50
 
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "daily"
-    open-pull-requests-limit: 20
+    open-pull-requests-limit: 50

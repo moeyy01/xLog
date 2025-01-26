@@ -3,7 +3,8 @@ FROM node:18-bullseye-slim as base
 
 RUN apt-get update || : && apt-get install python3 build-essential git -y
 
-RUN npm i -g pnpm pm2
+RUN corepack enable
+RUN npm i -g pm2
 
 ##### DEPS
 FROM base as deps
@@ -11,6 +12,7 @@ FROM base as deps
 WORKDIR /app
 
 COPY package.json pnpm-lock.yaml prisma ./
+COPY patches ./patches
 
 ENV PUPPETEER_SKIP_DOWNLOAD=true
 
