@@ -37,12 +37,12 @@ export default async function PromotionLinks({
         placement="bottom"
       >
         <UniLink href="https://oia.xlog.app">
-          <DevicePhoneMobileIcon className="w-[23px] h-[23px]" />
+          <DevicePhoneMobileIcon className="size-[23px]" />
         </UniLink>
       </Tooltip>
       {GITHUB_LINK && (
         <UniLink
-          className="flex-1 flex justify-center text-[#181717]"
+          className="flex-1 flex justify-center text-[#181717] dark:text-[#e6edf3]"
           href={GITHUB_LINK}
         >
           <span className="inline-block i-mingcute-github-fill text-2xl"></span>

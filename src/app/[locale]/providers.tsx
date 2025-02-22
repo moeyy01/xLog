@@ -1,5 +1,6 @@
 "use client"
 
+import { LazyMotion, MotionConfig } from "framer-motion"
 import {
   IntlError,
   IntlErrorCode,
@@ -25,7 +26,7 @@ import { useDarkModeListener } from "~/hooks/useDarkMode"
 // eslint-disable-next-line import/no-unresolved
 import { useMobileLayout } from "~/hooks/useMobileLayout"
 import { useNProgress } from "~/hooks/useNProgress"
-import { DARK_MODE_STORAGE_KEY } from "~/lib/constants"
+import { DARK_MODE_STORAGE_KEY, IS_PROD } from "~/lib/constants"
 import { APP_NAME, WALLET_CONNECT_V2_PROJECT_ID } from "~/lib/env"
 import { filterNotification } from "~/lib/filter"
 import { toGateway } from "~/lib/ipfs-parser"
@@ -35,6 +36,11 @@ const wagmiConfig = createWagmiConfig({
   appName: APP_NAME,
   // You can create or find it at https://cloud.walletconnect.com
   walletConnectV2ProjectId: WALLET_CONNECT_V2_PROJECT_ID,
+  joyIdOptions: {
+    name: APP_NAME,
+    logo: "https://xlog.app/assets/logo.png",
+    joyidAppURL: IS_PROD ? "https://app.joy.id" : "https://testnet.joyid.dev",
+  },
 })
 
 const colorScheme: NotificationModalColorScheme = {
@@ -60,6 +66,9 @@ export const mantineDefaultColorScheme = mantineDefaultColorSchemeT as
   | "auto"
   | "light"
   | "dark"
+
+const loadFeatures = () =>
+  import("./framer-lazy-feature").then((res) => res.default)
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   useMobileLayout()
@@ -97,7 +106,16 @@ export default function Providers({ children }: { children: React.ReactNode }) {
               signInStrategy="simple"
               ignoreWalletDisconnectEvent={true}
             >
-              <ModalStackProvider>{children}</ModalStackProvider>
+              <LazyMotion features={loadFeatures} strict key="framer">
+                <MotionConfig
+                  transition={{
+                    type: "spring",
+                    duration: 0.3,
+                  }}
+                >
+                  <ModalStackProvider>{children}</ModalStackProvider>
+                </MotionConfig>
+              </LazyMotion>
               <NotificationModal
                 colorScheme={colorScheme}
                 filter={filterNotification}

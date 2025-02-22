@@ -40,7 +40,7 @@ export const SiteHeader = async ({
 
   return (
     <header className="xlog-header border-b border-zinc-100 relative">
-      <div className="xlog-banner absolute inset-0 -z-10 overflow-hidden">
+      <div className="xlog-banner absolute inset-0 overflow-hidden">
         {(() => {
           switch (
             site?.metadata?.content?.banners?.[0]?.mime_type?.split("/")[0]
@@ -58,7 +58,7 @@ export const SiteHeader = async ({
             case "video":
               return (
                 <video
-                  className="object-cover h-full w-full"
+                  className="object-cover size-full"
                   src={site?.metadata?.content?.banners?.[0]?.address}
                   autoPlay
                   muted
@@ -71,14 +71,21 @@ export const SiteHeader = async ({
           }
         })()}
       </div>
-      <div className="px-5 max-w-screen-lg mx-auto h-full relative flex items-center flex-col">
+      <div
+        className={cn(
+          "px-5 max-w-screen-lg mx-auto h-full relative flex items-center flex-col z-10",
+          site?.metadata?.content?.banners?.[0]?.address
+            ? "bg-white/50 backdrop-blur-sm sm:bg-transparent sm:backdrop-filter-none"
+            : "",
+        )}
+      >
         <div className="mb-auto"></div>
         <div className="flex py-12 w-full">
           <div
             className={cn(
               "xlog-site-info flex space-x-6 sm:space-x-8 w-full",
               site?.metadata?.content?.banners?.[0]?.address
-                ? "bg-white/50 backdrop-blur-sm rounded-3xl p-4 pb-[52px] sm:p-8 z-[1] border"
+                ? "sm:bg-white/50 sm:backdrop-blur-sm sm:rounded-3xl z-[1] sm:p-8 sm:border"
                 : "",
             )}
           >

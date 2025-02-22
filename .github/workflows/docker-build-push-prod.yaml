@@ -1,10 +1,12 @@
 # build and push docker image to docker hub
-name: Build & Deploy Dev
+name: Build & Deploy Prod
 
 on:
   push:
     branches:
       - "main"
+    paths-ignore:
+      - "deploy/**"
 
 jobs:
   build:
@@ -13,7 +15,7 @@ jobs:
     outputs:
       version: ${{ steps.meta.outputs.version }}
     steps:
-      - uses: hmarr/debug-action@v2
+      - uses: hmarr/debug-action@v3
       - name: Checkout
         uses: actions/checkout@v4
       - name: docker meta

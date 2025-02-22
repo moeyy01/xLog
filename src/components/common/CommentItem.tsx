@@ -10,7 +10,7 @@ import { useQueryClient } from "@tanstack/react-query"
 import { CharacterFloatCard } from "~/components/common/CharacterFloatCard"
 import { CommentInput } from "~/components/common/CommentInput"
 import { DeleteConfirmationModal } from "~/components/common/DeleteConfirmationModal"
-import PageContent from "~/components/common/PageContent"
+import MarkdownContent from "~/components/common/MarkdownContent"
 import { ReactionLike } from "~/components/common/ReactionLike"
 import { Titles } from "~/components/common/Titles"
 import { BlockchainIcon } from "~/components/icons/BlockchainIcon"
@@ -136,10 +136,10 @@ export const CommentItem = ({
               <BlockchainIcon className="inline-block" />
             </UniLink>
           </div>
-          <PageContent
+          <MarkdownContent
             content={comment.metadata?.content?.content}
-            isComment={true}
-          ></PageContent>
+            strictMode={true}
+          ></MarkdownContent>
           <div className="mt-1 flex items-center">
             <div
               className="xlog-reactions fill-gray-400 text-gray-500 sm:items-center inline-flex text-sm space-x-3"
@@ -153,7 +153,7 @@ export const CommentItem = ({
             </div>
             {depth < 2 && (
               <Button
-                className="text-gray-500 text-[13px] ml-1 mt-[-1px]"
+                className="text-gray-500 text-[13px] ml-1 -mt-px"
                 variant="text"
                 onClick={() => setReplyOpen(!replyOpen)}
               >
@@ -167,7 +167,7 @@ export const CommentItem = ({
             )}
             {comment.characterId === account?.characterId && (
               <Button
-                className="text-gray-500 text-[13px] mt-[-1px]"
+                className="text-gray-500 text-[13px] -mt-px"
                 variant="text"
                 onClick={() => setEditOpen(!editOpen)}
               >
@@ -179,7 +179,7 @@ export const CommentItem = ({
               !(comment as any)?.fromNotes?.list?.length && (
                 <>
                   <Button
-                    className="text-gray-500 text-[13px] mt-[-1px]"
+                    className="text-gray-500 text-[13px] -mt-px"
                     variant="text"
                     onClick={() => setDeleteConfirmModalOpen(true)}
                     isLoading={deletePage.isLoading}

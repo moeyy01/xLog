@@ -1,5 +1,4 @@
-import { getTranslations } from "next-intl/server"
-
+import PostTitle from "~/components/site/PostTitle"
 import { Image } from "~/components/ui/Image"
 import { UniLink } from "~/components/ui/UniLink"
 import getQueryClient from "~/lib/query-client"
@@ -32,7 +31,6 @@ export default async function SiteNFTPage({
   const queryClient = getQueryClient()
 
   const site = await fetchGetSite(params.site, queryClient)
-  const t = await getTranslations()
 
   let nfts = (await getNFTs(site?.owner)) ?? {
     nfts: [],
@@ -41,7 +39,7 @@ export default async function SiteNFTPage({
 
   return (
     <>
-      <h2 className="page-title">NFT {t("Showcase")}</h2>
+      <PostTitle title="NFT" />
       <div className="my-8 text-zinc-500 text-sm">
         <span className="font-medium">Supported chains:</span>{" "}
         {nfts.chains.join(", ")}
@@ -65,7 +63,7 @@ export default async function SiteNFTPage({
               <div className="w-full aspect-[1] relative rounded overflow-hidden">
                 <div className="absolute inset-0">
                   <Image
-                    className="object-cover no-optimization w-full h-full rounded-2xl"
+                    className="object-cover no-optimization size-full rounded-2xl"
                     alt={"nft"}
                     src={nft.previews.image_medium_url}
                     fill={true}

@@ -1,10 +1,10 @@
 import type { NoteEntity } from "crossbell"
-import dayjs from "dayjs"
 
 import { indexer } from "@crossbell/indexer"
 import { gql } from "@urql/core"
 
 import countCharacters from "~/lib/character-count"
+import dayjs from "~/lib/dayjs"
 import { expandCrossbellNote } from "~/lib/expand-unit"
 import { ExpandedNote, Language } from "~/lib/types"
 import { client } from "~/queries/graphql"
@@ -83,6 +83,12 @@ export async function getFeed({
     }
   `
 
+  const contentFilterQuery = filter.post_content
+    .map((content) => {
+      return `{ content: { path: "content", string_contains: "${content}" } }`
+    })
+    .join(",\n")
+
   let resultAll: {
     list: ExpandedNote[]
     cursor?: string | null
@@ -91,6 +97,9 @@ export async function getFeed({
     list: [],
     count: 0,
   }
+
+  const restrictedDate = new Date()
+  restrictedDate.setMonth(restrictedDate.getMonth() - 2)
 
   switch (type) {
     case "latest": {
@@ -105,6 +114,9 @@ export async function getFeed({
                   },
                   deleted: {
                     equals: false,
+                  },
+                  createdAt: {
+                    gt: "${restrictedDate.toISOString()}",
                   },
                   metadata: {
                     content: {
@@ -121,7 +133,7 @@ export async function getFeed({
                         path: "tags",
                         array_starts_with: "short" # TODO: remove this
                       }
-                    }]
+                    }, ${contentFilterQuery}]
                   },
                 },
                 orderBy: [{ createdAt: desc }],
@@ -154,8 +166,9 @@ export async function getFeed({
       resultAll = {
         list,
         cursor: list?.length
-          ? `${list[list.length - 1]?.characterId}_${list[list.length - 1]
-              ?.noteId}`
+          ? `${list[list.length - 1]?.characterId}_${
+              list[list.length - 1]?.noteId
+            }`
           : undefined,
         count: list?.length || 0,
       }
@@ -173,6 +186,9 @@ export async function getFeed({
                   },
                   deleted: {
                     equals: false,
+                  },
+                  createdAt: {
+                    gt: "${restrictedDate.toISOString()}",
                   },
                   metadata: {
                     AND: [{
@@ -271,8 +287,9 @@ export async function getFeed({
       resultAll = {
         list,
         cursor: list?.length
-          ? `${list[list.length - 1]?.characterId}_${list[list.length - 1]
-              ?.noteId}`
+          ? `${list[list.length - 1]?.characterId}_${
+              list[list.length - 1]?.noteId
+            }`
           : undefined,
         count: list?.length || 0,
       }
@@ -290,6 +307,9 @@ export async function getFeed({
                   },
                   deleted: {
                     equals: false,
+                  },
+                  createdAt: {
+                    gt: "${restrictedDate.toISOString()}",
                   },
                   metadata: {
                     AND: [{
@@ -340,8 +360,9 @@ export async function getFeed({
       resultAll = {
         list,
         cursor: list?.length
-          ? `${list[list.length - 1]?.characterId}_${list[list.length - 1]
-              ?.noteId}`
+          ? `${list[list.length - 1]?.characterId}_${
+              list[list.length - 1]?.noteId
+            }`
           : undefined,
         count: list?.length || 0,
       }
@@ -428,6 +449,9 @@ export async function getFeed({
                     deleted: {
                       equals: false,
                     },
+                    createdAt: {
+                      gt: "${restrictedDate.toISOString()}",
+                    },
                     metadata: {
                       AND: [
                         {
@@ -488,8 +512,9 @@ export async function getFeed({
         resultAll = {
           list: list,
           cursor: list?.length
-            ? `${list[list.length - 1]?.characterId}_${list[list.length - 1]
-                ?.noteId}`
+            ? `${list[list.length - 1]?.characterId}_${
+                list[list.length - 1]?.noteId
+              }`
             : undefined,
           count: list?.length || 0,
         }
@@ -512,6 +537,9 @@ export async function getFeed({
                     },
                     deleted: {
                       equals: false,
+                    },
+                    createdAt: {
+                      gt: "${restrictedDate.toISOString()}",
                     },
                     metadata: {
                       AND: [
@@ -565,8 +593,9 @@ export async function getFeed({
         resultAll = {
           list: list,
           cursor: list?.length
-            ? `${list[list.length - 1]?.characterId}_${list[list.length - 1]
-                ?.noteId}`
+            ? `${list[list.length - 1]?.characterId}_${
+                list[list.length - 1]?.noteId
+              }`
             : undefined,
           count: list?.length || 0,
         }
@@ -702,6 +731,14 @@ export async function getFeed({
                   deleted: {
                     equals: false,
                   },
+                  createdAt: {
+                    gt: "${restrictedDate.toISOString()}",
+                  },
+                  stat: {
+                    viewDetailCount: {
+                      gt: 10
+                    },
+                  },
                   metadata: {
                     content: {
                       path: "sources",
@@ -716,6 +753,11 @@ export async function getFeed({
                       content: {
                         path: "tags",
                         array_starts_with: "short" # TODO: remove this
+                      }
+                    }, {
+                      content: {
+                        path: "tags",
+                        array_starts_with: "portfolio"
                       }
                     }]
                   },
@@ -798,8 +840,9 @@ export async function getFeed({
       )
 
       const cursor = list?.length
-        ? `${list[list.length - 1]?.characterId}_${list[list.length - 1]
-            ?.noteId}`
+        ? `${list[list.length - 1]?.characterId}_${
+            list[list.length - 1]?.noteId
+          }`
         : undefined
 
       list = list.sort((a, b) => {

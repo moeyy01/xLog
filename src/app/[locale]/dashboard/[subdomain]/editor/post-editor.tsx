@@ -141,7 +141,8 @@ export default function PostEditor() {
 
   const updateValue = useCallback(
     (val: EditorValues) => {
-      if (visibility !== PageVisibilityEnum.Draft) {
+      const _visibility = getPageVisibility(page.data || undefined) // can't get the correct visibility here, very strange
+      if (_visibility !== PageVisibilityEnum.Draft) {
         setVisibility(PageVisibilityEnum.Modified)
       }
 
@@ -176,7 +177,7 @@ export default function PostEditor() {
       }
       useEditorState.setState(newValues)
     },
-    [type, queryClient, subdomain, visibility],
+    [visibility, site.data?.characterId, type, queryClient, page.data],
   )
 
   const isMobileLayout = useIsMobileLayout()
@@ -236,8 +237,9 @@ export default function PostEditor() {
 
       if (createPage.data?.noteId) {
         router.replace(
-          `/dashboard/${subdomain}/editor?id=${createPage.data
-            ?.noteId}&type=${searchParams?.get("type")}`,
+          `/dashboard/${subdomain}/editor?id=${
+            createPage.data?.noteId
+          }&type=${searchParams?.get("type")}`,
         )
       }
 
@@ -353,14 +355,11 @@ export default function PostEditor() {
     [setView],
   )
 
-  const onChange = useCallback(
-    (value: string) => {
-      updateValue({
-        content: value,
-      })
-    },
-    [updateValue],
-  )
+  const onChange = (value: string) => {
+    updateValue({
+      content: value,
+    })
+  }
 
   const onPreviewButtonClick = useCallback(() => {
     window.open(
@@ -393,7 +392,7 @@ export default function PostEditor() {
           <>
             <header
               className={cn(
-                "flex justify-between absolute top-0 inset-x-0 z-[25] px-5 h-14 border-b items-center text-sm",
+                "flex justify-between absolute top-0 inset-x-0 px-5 h-14 border-b items-center text-sm",
                 isMobileLayout && "w-screen",
               )}
             >
@@ -501,6 +500,7 @@ export default function PostEditor() {
                     onCreateEditor={onCreateEditor}
                     isRendering={isRendering}
                     setIsRendering={setIsRendering}
+                    codeTheme={site.data?.metadata?.content?.code_theme}
                   />
                 </div>
               </div>

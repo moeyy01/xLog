@@ -1,35 +1,18 @@
 import { useDebounceEffect } from "ahooks"
-import type { Root } from "mdast"
+import type { Root } from "hast"
 import { useTranslations } from "next-intl"
-import dynamic from "next/dynamic"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import type { BundledTheme } from "shiki/themes"
 
 import { EditorView } from "@codemirror/view"
 
+import MarkdownContent from "~/components/common/MarkdownContent"
 import { toolbarShortcuts } from "~/components/dashboard/toolbars"
 import { editorUpload } from "~/components/dashboard/toolbars/Multimedia"
+import CodeMirror from "~/components/ui/CodeMirror"
 import { useIsMobileLayout } from "~/hooks/useMobileLayout"
-import { useUploadFile } from "~/hooks/useUploadFile"
 import { cn } from "~/lib/utils"
-import { Rendered, renderPageContent } from "~/markdown"
-
-import { Loading } from "../common/Loading"
-
-const DynamicCodeMirrorEditor = dynamic(
-  () => import("~/components/ui/CodeMirror"),
-  {
-    ssr: false,
-    loading: () => <Loading className="flex-1 h-12" />,
-  },
-)
-
-const DynamicPageContent = dynamic(
-  () => import("~/components/common/PageContent"),
-  {
-    ssr: false,
-    loading: () => <Loading className="flex-1 h-12" />,
-  },
-)
+import { renderPageContent } from "~/markdown"
 
 export default function DualColumnEditor({
   initialContent,
@@ -37,16 +20,20 @@ export default function DualColumnEditor({
   onCreateEditor,
   isRendering,
   setIsRendering,
+  codeTheme,
 }: {
   initialContent: string
   onChange: (value: string) => void
   onCreateEditor: (view: EditorView) => void
   isRendering: boolean
   setIsRendering: (value: boolean) => void
+  codeTheme?: {
+    light?: BundledTheme
+    dark?: BundledTheme
+  }
 }) {
   const isMobileLayout = useIsMobileLayout()
   const t = useTranslations()
-  const uploadFile = useUploadFile()
 
   const [currentScrollArea, setCurrentScrollArea] = useState<string>("")
   const [view, setView] = useState<EditorView>()
@@ -54,7 +41,9 @@ export default function DualColumnEditor({
   const [values, setValues] = useState("")
 
   // preview
-  const [parsedContent, setParsedContent] = useState<Rendered | undefined>()
+  const [parsedContent, setParsedContent] = useState<
+    ReturnType<typeof renderPageContent> | undefined
+  >()
 
   useEffect(() => {
     setValues(initialContent)
@@ -62,11 +51,15 @@ export default function DualColumnEditor({
 
   useDebounceEffect(
     () => {
-      const result = renderPageContent(values)
+      const result = renderPageContent({
+        content: values,
+        strictMode: true,
+        codeTheme,
+      })
       setTree(result.tree)
       setParsedContent(result)
     },
-    [values],
+    [values, codeTheme],
     {
       wait: 500,
     },
@@ -75,13 +68,10 @@ export default function DualColumnEditor({
   const previewRef = useRef<HTMLDivElement>(null)
 
   // editor
-  const onCreateEditorInside = useCallback(
-    (view: EditorView) => {
-      setView?.(view)
-      onCreateEditor?.(view)
-    },
-    [setView],
-  )
+  const onCreateEditorInside = useCallback((view: EditorView) => {
+    setView?.(view)
+    onCreateEditor?.(view)
+  }, [])
 
   const handleDropFile = useCallback(
     async (file: File) => {
@@ -89,11 +79,11 @@ export default function DualColumnEditor({
         editorUpload(file, view)
       }
     },
-    [uploadFile, view],
+    [view],
   )
 
   const computedPosition = useCallback(() => {
-    let previewChildNodes = previewRef.current?.childNodes[0]?.childNodes
+    let previewChildNodes = previewRef.current?.childNodes
     const editorElementList: number[] = []
     const previewElementList: number[] = []
     if (view?.state && previewChildNodes) {
@@ -213,9 +203,9 @@ export default function DualColumnEditor({
   )
 
   return (
-    <div className="min-h-0 flex relative items-center w-full h-full">
+    <div className="min-h-0 flex relative items-center size-full">
       {!(isMobileLayout && isRendering) && (
-        <DynamicCodeMirrorEditor
+        <CodeMirror
           value={initialContent}
           placeholder={t("Start writing") as string}
           onChange={onChangeInside}
@@ -231,22 +221,22 @@ export default function DualColumnEditor({
         />
       )}
       {!isMobileLayout && (
-        <div className="z-10 w-[1px]">
+        <div className="z-10 w-px">
           <div
             aria-label="Toggle preview view"
-            className="bg-accent rounded-full cursor-pointer text-white w-6 h-6 -translate-x-1/2"
+            className="bg-accent rounded-full cursor-pointer text-white size-6 -translate-x-1/2"
             onClick={() => setIsRendering(!isRendering)}
           >
             {isRendering ? (
-              <i className="i-mingcute-right-line text-2xl inline-block w-6 h-6" />
+              <i className="i-mingcute-right-line text-2xl inline-block size-6" />
             ) : (
-              <i className="i-mingcute-left-line text-2xl inline-block w-6 h-6" />
+              <i className="i-mingcute-left-line text-2xl inline-block size-6" />
             )}
           </div>
         </div>
       )}
       {isRendering && (
-        <DynamicPageContent
+        <MarkdownContent
           className="bg-white px-5 overflow-scroll pb-[200px] h-full flex-1"
           parsedContent={parsedContent}
           inputRef={previewRef}
@@ -254,6 +244,7 @@ export default function DualColumnEditor({
           onMouseEnter={() => {
             setCurrentScrollArea("preview")
           }}
+          codeTheme={codeTheme}
         />
       )}
     </div>
